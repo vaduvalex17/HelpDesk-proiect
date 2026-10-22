@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge_prioritate, badge_status %}
+{% block title %}Tichet #{{ tichet.id }} – HelpDesk IT{% endblock %}
+{% block content %}
+<a href="{{ url_for('tickets.lista') }}" class="btn btn-link px-0 mb-2">&larr; Înapoi la listă</a>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <h1 class="h4 m-0">#{{ tichet.id }} {{ tichet.titlu }}</h1>
+      <div>{{ badge_status(tichet.status) }} {{ badge_prioritate(tichet.prioritate) }}</div>
+    </div>
+    <dl class="row mt-3 mb-0">
+      <dt class="col-sm-3">Categorie</dt><dd class="col-sm-9">{{ tichet.categorie.nume }}</dd>
+      <dt class="col-sm-3">Deschis de</dt><dd class="col-sm-9">{{ tichet.autor.nume }}</dd>
+      <dt class="col-sm-3">Tehnician</dt><dd class="col-sm-9">{{ tichet.tehnician.nume if tichet.tehnician else "Neatribuit" }}</dd>
+      <dt class="col-sm-3">Creat la</dt><dd class="col-sm-9">{{ tichet.creat_la.strftime("%d.%m.%Y %H:%M") }}</dd>
+      <dt class="col-sm-3">Actualizat la</dt><dd class="col-sm-9">{{ tichet.actualizat_la.strftime("%d.%m.%Y %H:%M") }}</dd>
+    </dl>
+    <hr>
+    <p class="mb-0" style="white-space: pre-line">{{ tichet.descriere }}</p>
+  </div>
+</div>
+{% endblock %}

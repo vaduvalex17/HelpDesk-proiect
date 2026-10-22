@@ -56,3 +56,35 @@ def test_lista_arata_doar_tichetele_mele(app, client):
     pagina = client.get("/tickets").get_data(as_text=True)
     assert "Tichetul Anei" in pagina
     assert "Tichetul lui Bogdan" not in pagina
+
+
+def creeaza_tichet_ca(client, email):
+    autentifica(client, email=email)
+    raspuns = client.post("/tickets/new", data=date_tichet())
+    client.post("/logout")
+    return int(raspuns.headers["Location"].rsplit("/", 1)[1])
+
+
+def test_dupa_creare_ajungi_pe_detaliu(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    autentifica(client)
+    pagina = client.get(f"/tickets/{tichet_id}").get_data(as_text=True)
+    assert "Laptopul nu pornește" in pagina
+    assert "Ecran negru după actualizare." in pagina
+
+
+def test_angajat_nu_vede_tichetul_altuia(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat2@technova.test")
+    autentifica(client)
+    assert client.get(f"/tickets/{tichet_id}").status_code == 403
+
+
+def test_tehnicianul_vede_orice_tichet(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat2@technova.test")
+    autentifica(client, email="tehnician@technova.test")
+    assert client.get(f"/tickets/{tichet_id}").status_code == 200
+
+
+def test_tichet_inexistent_404(client):
+    autentifica(client)
+    assert client.get("/tickets/999").status_code == 404
