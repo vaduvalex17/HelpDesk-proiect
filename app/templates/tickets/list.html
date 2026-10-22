@@ -1,31 +1,10 @@
 {% extends "base.html" %}
-{% from "_macros.html" import badge_prioritate, badge_status %}
+{% from "tickets/_tabel.html" import tabel_tichete %}
 {% block title %}Tichetele mele – HelpDesk IT{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h3 m-0">Tichetele mele</h1>
   <a href="{{ url_for('tickets.creeaza') }}" class="btn btn-primary">Tichet nou</a>
 </div>
-{% if tichete %}
-<div class="table-responsive">
-  <table class="table table-hover bg-white shadow-sm align-middle">
-    <thead class="table-light">
-      <tr><th>Nr.</th><th>Titlu</th><th>Prioritate</th><th>Status</th><th>Data</th></tr>
-    </thead>
-    <tbody>
-      {% for tichet in tichete %}
-      <tr>
-        <td>#{{ tichet.id }}</td>
-        <td><a href="{{ url_for('tickets.detaliu', tichet_id=tichet.id) }}">{{ tichet.titlu }}</a></td>
-        <td>{{ badge_prioritate(tichet.prioritate) }}</td>
-        <td>{{ badge_status(tichet.status) }}</td>
-        <td>{{ tichet.creat_la.strftime("%d.%m.%Y %H:%M") }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% else %}
-<div class="alert alert-light border">Nu ai deschis încă niciun tichet.</div>
-{% endif %}
+{{ tabel_tichete(tichete, "Nu ai deschis încă niciun tichet.") }}
 {% endblock %}

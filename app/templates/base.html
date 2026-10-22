@@ -18,6 +18,9 @@
         <ul class="navbar-nav me-auto">
           {% block meniu %}
           <li class="nav-item"><a class="nav-link" href="{{ url_for('tickets.lista') }}">Tichetele mele</a></li>
+          {% if current_user.are_rol("tehnician", "manager") %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('tickets.panou_tehnician') }}">Panou tehnician</a></li>
+          {% endif %}
           {% endblock %}
         </ul>
       <div class="d-flex align-items-center gap-3">

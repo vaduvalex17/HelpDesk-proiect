@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "tickets/_tabel.html" import tabel_tichete %}
+{% block title %}Panou tehnician – HelpDesk IT{% endblock %}
+
+{% macro buton_preia(tichet) -%}
+<form method="post" action="{{ url_for('tickets.preia', tichet_id=tichet.id) }}" class="m-0">
+  <button type="submit" class="btn btn-sm btn-success">Preia</button>
+</form>
+{%- endmacro %}
+
+{% block content %}
+<h1 class="h3 mb-3">Panou tehnician</h1>
+<h2 class="h5">Tichete neatribuite</h2>
+{{ tabel_tichete(neatribuite, "Nu există tichete noi neatribuite.", cu_autor=true, actiune=buton_preia) }}
+<h2 class="h5 mt-4">Tichetele mele în lucru</h2>
+{{ tabel_tichete(ale_mele, "Nu ai tichete în lucru.", cu_autor=true) }}
+{% endblock %}
