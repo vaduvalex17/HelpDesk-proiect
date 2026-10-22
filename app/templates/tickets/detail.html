@@ -20,4 +20,20 @@
     <p class="mb-0" style="white-space: pre-line">{{ tichet.descriere }}</p>
   </div>
 </div>
+
+{% if tehnicieni and tichet.status != "Închis" %}
+<div class="card shadow-sm mt-3">
+  <div class="card-body">
+    <h2 class="h6">Atribuie tichetul</h2>
+    <form method="post" action="{{ url_for('tickets.atribuie', tichet_id=tichet.id) }}" class="d-flex gap-2 flex-wrap">
+      <select name="tehnician_id" class="form-select w-auto" required>
+        {% for tehnician in tehnicieni %}
+        <option value="{{ tehnician.id }}" {% if tichet.tehnician_id == tehnician.id %}selected{% endif %}>{{ tehnician.nume }} ({{ tehnician.rol }})</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary">Atribuie</button>
+    </form>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
