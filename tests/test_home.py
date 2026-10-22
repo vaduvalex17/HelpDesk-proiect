@@ -7,8 +7,8 @@ def test_pagina_principala_cere_autentificare(client):
     assert "/login" in raspuns.headers["Location"]
 
 
-def test_pagina_principala_dupa_login(client):
+def test_pagina_principala_duce_la_tichetele_mele(client):
     autentifica(client)
-    raspuns = client.get("/")
+    raspuns = client.get("/", follow_redirects=True)
     assert raspuns.status_code == 200
-    assert "HelpDesk IT" in raspuns.get_data(as_text=True)
+    assert "Tichetele mele" in raspuns.get_data(as_text=True)
