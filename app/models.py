@@ -32,6 +32,9 @@ class User(UserMixin, db.Model):
     def verifica_parola(self, parola):
         return check_password_hash(self.parola_hash, parola)
 
+    def are_rol(self, *roluri):
+        return self.rol in roluri
+
     @property
     def is_active(self):
         # Flask-Login refuză autentificarea utilizatorilor dezactivați (F12)
