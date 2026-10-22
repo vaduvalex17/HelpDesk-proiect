@@ -44,3 +44,15 @@ def test_creare_tichet_prioritate_invalida_esueaza(app, client):
     autentifica(client)
     client.post("/tickets/new", data=date_tichet(prioritate="Urgentă"))
     assert db.session.execute(db.select(Ticket)).first() is None
+
+
+def test_lista_arata_doar_tichetele_mele(app, client):
+    autentifica(client, email="angajat2@technova.test")
+    client.post("/tickets/new", data=date_tichet(titlu="Tichetul lui Bogdan"))
+    client.post("/logout")
+
+    autentifica(client)
+    client.post("/tickets/new", data=date_tichet(titlu="Tichetul Anei"))
+    pagina = client.get("/tickets").get_data(as_text=True)
+    assert "Tichetul Anei" in pagina
+    assert "Tichetul lui Bogdan" not in pagina

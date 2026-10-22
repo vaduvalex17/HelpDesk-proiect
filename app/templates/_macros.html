@@ -1,0 +1,9 @@
+{% macro badge_prioritate(prioritate) -%}
+{% set culori = {"Scăzută": "secondary", "Medie": "info", "Ridicată": "warning", "Critică": "danger"} %}
+<span class="badge text-bg-{{ culori.get(prioritate, 'secondary') }}">{{ prioritate }}</span>
+{%- endmacro %}
+
+{% macro badge_status(status) -%}
+{% set culori = {"Nou": "primary", "În lucru": "warning", "Rezolvat": "success", "Închis": "dark"} %}
+<span class="badge text-bg-{{ culori.get(status, 'secondary') }}">{{ status }}</span>
+{%- endmacro %}

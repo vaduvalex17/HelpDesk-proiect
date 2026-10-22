@@ -2,7 +2,7 @@
 
 import os
 
-from flask import Flask, render_template
+from flask import Flask, redirect, url_for
 from flask_login import login_required
 
 from . import models  # noqa: F401  (înregistrează modelele)
@@ -37,6 +37,6 @@ def create_app(config=None):
     @app.route("/")
     @login_required
     def index():
-        return render_template("index.html")
+        return redirect(url_for("tickets.lista"))
 
     return app
