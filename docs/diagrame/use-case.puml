@@ -1,0 +1,53 @@
+@startuml use-case
+' Diagrama cazurilor de utilizare – HelpDesk IT (issue #6)
+' Codurile Fx trimit la cerințele din docs/specificatii.md.
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor "Angajat" as Angajat
+actor "Tehnician IT" as Tehnician
+actor "Manager IT" as Manager
+
+Manager -|> Tehnician
+
+rectangle "Sistem HelpDesk IT" {
+  usecase "Se autentifică\n(F1, F5)" as UC_Auth
+  usecase "Deschide tichet\n(F2)" as UC_Deschide
+  usecase "Vede tichetele mele\n(F3)" as UC_Mele
+  usecase "Vede detaliul tichetului\n(F4)" as UC_Detaliu
+  usecase "Comentează\n(F9)" as UC_Comenteaza
+  usecase "Filtrează și caută\n(F10)" as UC_Filtreaza
+  usecase "Primește email\n(F14)" as UC_Email
+  usecase "Preia tichet\n(F6)" as UC_Preia
+  usecase "Schimbă statusul\n(F8)" as UC_Status
+  usecase "Înregistrează în istoric" as UC_Istoric
+  usecase "Vede alerte SLA\n(F13)" as UC_SLA
+  usecase "Atribuie tichet\n(F7)" as UC_Atribuie
+  usecase "Vede statistici\n(F11)" as UC_Statistici
+  usecase "Administrează utilizatori\nși categorii (F12)" as UC_Admin
+}
+
+Angajat -- UC_Auth
+Angajat -- UC_Deschide
+Angajat -- UC_Mele
+Angajat -- UC_Detaliu
+Angajat -- UC_Comenteaza
+Angajat -- UC_Filtreaza
+Angajat -- UC_Email
+
+UC_Auth -- Tehnician
+UC_Detaliu -- Tehnician
+UC_Comenteaza -- Tehnician
+UC_Filtreaza -- Tehnician
+UC_Preia -- Tehnician
+UC_Status -- Tehnician
+UC_SLA -- Tehnician
+
+UC_Atribuie -- Manager
+UC_Statistici -- Manager
+UC_Admin -- Manager
+
+UC_Status ..> UC_Istoric : <<include>>
+@enduml
