@@ -10,6 +10,8 @@ from .extensions import db, login_manager
 ROLURI = ("angajat", "tehnician", "manager")
 PRIORITATI = ("Scăzută", "Medie", "Ridicată", "Critică")
 STATUSURI = ("Nou", "În lucru", "Rezolvat", "Închis")
+# F8: un tichet avansează doar cu o etapă: Nou → În lucru → Rezolvat → Închis
+URMATORUL_STATUS = {"Nou": "În lucru", "În lucru": "Rezolvat", "Rezolvat": "Închis"}
 
 
 def acum():
@@ -76,5 +78,31 @@ class Ticket(db.Model):
     tehnician = db.relationship("User", foreign_keys=[tehnician_id], backref="tichete_atribuite")
     categorie = db.relationship("Category", backref="tichete")
 
+    istoric = db.relationship(
+        "TicketHistory",
+        back_populates="tichet",
+        order_by="TicketHistory.modificat_la",
+        cascade="all, delete-orphan",
+    )
+
+    def schimba_status(self, status_nou, utilizator):
+        """Schimbă statusul și înregistrează schimbarea în istoric (F8)."""
+        self.istoric.append(
+            TicketHistory(status_vechi=self.status, status_nou=status_nou, utilizator=utilizator)
+        )
+        self.status = status_nou
+
     def __repr__(self):
         return f"<Ticket #{self.id} {self.status}>"
+
+
+class TicketHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey("ticket.id"), nullable=False)
+    utilizator_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    status_vechi = db.Column(db.String(10))
+    status_nou = db.Column(db.String(10), nullable=False)
+    modificat_la = db.Column(db.DateTime(timezone=True), nullable=False, default=acum)
+
+    tichet = db.relationship("Ticket", back_populates="istoric")
+    utilizator = db.relationship("User")
