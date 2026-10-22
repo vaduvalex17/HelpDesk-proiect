@@ -1,7 +1,7 @@
 from conftest import autentifica
 
 from app.extensions import db
-from app.models import Category, Ticket
+from app.models import Category, Ticket, User
 
 
 def date_tichet(**modificari):
@@ -126,3 +126,40 @@ def test_angajatul_nu_poate_prelua(app, client):
     tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
     autentifica(client)
     assert client.post(f"/tickets/{tichet_id}/preia").status_code == 403
+
+
+def id_utilizator(email):
+    return db.session.execute(db.select(User).filter_by(email=email)).scalar_one().id
+
+
+def test_managerul_atribuie_tichetul(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    autentifica(client, email="manager@technova.test")
+    assert "Atribuie tichetul" in client.get(f"/tickets/{tichet_id}").get_data(as_text=True)
+    client.post(
+        f"/tickets/{tichet_id}/atribuie",
+        data={"tehnician_id": id_utilizator("tehnician@technova.test")},
+    )
+    tichet = db.session.get(Ticket, tichet_id)
+    assert tichet.tehnician.email == "tehnician@technova.test"
+    assert tichet.status == "În lucru"
+
+
+def test_nu_se_poate_atribui_unui_angajat(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    autentifica(client, email="manager@technova.test")
+    client.post(
+        f"/tickets/{tichet_id}/atribuie",
+        data={"tehnician_id": id_utilizator("angajat2@technova.test")},
+    )
+    assert db.session.get(Ticket, tichet_id).tehnician is None
+
+
+def test_tehnicianul_nu_poate_atribui(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    autentifica(client, email="tehnician@technova.test")
+    raspuns = client.post(
+        f"/tickets/{tichet_id}/atribuie",
+        data={"tehnician_id": id_utilizator("tehnician@technova.test")},
+    )
+    assert raspuns.status_code == 403

@@ -1,17 +1,25 @@
-"""Tichete: creare (F2), listă (F3), detaliu (F4), panou tehnician și preluare (F6)."""
+"""Rutele pentru tichete: creare, listă, detaliu, preluare, atribuire (F2–F4, F6, F7)."""
 
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from ..auth.decorators import role_required
 from ..extensions import db
-from ..models import PRIORITATI, Category, Ticket
+from ..models import PRIORITATI, Category, Ticket, User
 from . import bp
 
 
 def categorii_active():
     return db.session.execute(
         db.select(Category).filter_by(activa=True).order_by(Category.nume)
+    ).scalars().all()
+
+
+def tehnicieni_activi():
+    return db.session.execute(
+        db.select(User)
+        .filter(User.rol.in_(("tehnician", "manager")), User.activ.is_(True))
+        .order_by(User.nume)
     ).scalars().all()
 
 
@@ -70,7 +78,10 @@ def detaliu(tichet_id):
     tichet = db.get_or_404(Ticket, tichet_id)
     if current_user.rol == "angajat" and tichet.autor_id != current_user.id:
         abort(403)
-    return render_template("tickets/detail.html", tichet=tichet)
+    tehnicieni = []
+    if current_user.are_rol("manager"):
+        tehnicieni = tehnicieni_activi()
+    return render_template("tickets/detail.html", tichet=tichet, tehnicieni=tehnicieni)
 
 
 @bp.route("/tech")
@@ -102,4 +113,23 @@ def preia(tichet_id):
     tichet.status = "În lucru"
     db.session.commit()
     flash(f"Ai preluat tichetul #{tichet.id}.", "success")
+    return redirect(url_for("tickets.detaliu", tichet_id=tichet.id))
+
+
+@bp.route("/<int:tichet_id>/atribuie", methods=["POST"])
+@role_required("manager")
+def atribuie(tichet_id):
+    """F7 – Managerul atribuie orice tichet unui tehnician."""
+    tichet = db.get_or_404(Ticket, tichet_id)
+    tehnician = db.session.get(User, request.form.get("tehnician_id", type=int) or 0)
+    if tehnician is None or not tehnician.activ or not tehnician.are_rol("tehnician", "manager"):
+        flash("Alege un tehnician valid.", "danger")
+    elif tichet.status == "Închis":
+        flash("Un tichet închis nu mai poate fi atribuit.", "warning")
+    else:
+        tichet.tehnician = tehnician
+        if tichet.status == "Nou":
+            tichet.status = "În lucru"
+        db.session.commit()
+        flash(f"Tichetul #{tichet.id} a fost atribuit lui {tehnician.nume}.", "success")
     return redirect(url_for("tickets.detaliu", tichet_id=tichet.id))
