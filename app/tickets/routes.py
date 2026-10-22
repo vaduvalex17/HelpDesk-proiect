@@ -1,11 +1,11 @@
-"""Rutele pentru tichete: creare, listă, detaliu, preluare, atribuire (F2–F4, F6–F8)."""
+"""Rutele pentru tichete: creare, listă, detaliu, preluare, atribuire (F2–F4, F6–F9)."""
 
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from ..auth.decorators import role_required
 from ..extensions import db
-from ..models import PRIORITATI, URMATORUL_STATUS, Category, Ticket, User
+from ..models import PRIORITATI, URMATORUL_STATUS, Category, Comment, Ticket, User
 from . import bp
 
 
@@ -13,6 +13,14 @@ def categorii_active():
     return db.session.execute(
         db.select(Category).filter_by(activa=True).order_by(Category.nume)
     ).scalars().all()
+
+
+def tichet_vizibil_sau_403(tichet_id):
+    """Un angajat are acces doar la propriile tichete (F4)."""
+    tichet = db.get_or_404(Ticket, tichet_id)
+    if current_user.rol == "angajat" and tichet.autor_id != current_user.id:
+        abort(403)
+    return tichet
 
 
 def tehnicieni_activi():
@@ -76,9 +84,7 @@ def lista():
 @login_required
 def detaliu(tichet_id):
     """F4 – Detaliu tichet: un angajat nu poate deschide tichetul altui angajat."""
-    tichet = db.get_or_404(Ticket, tichet_id)
-    if current_user.rol == "angajat" and tichet.autor_id != current_user.id:
-        abort(403)
+    tichet = tichet_vizibil_sau_403(tichet_id)
     tehnicieni = []
     if current_user.are_rol("manager"):
         tehnicieni = tehnicieni_activi()
@@ -168,3 +174,17 @@ def schimba_status(tichet_id):
         db.session.commit()
         flash(f"Tichetul #{tichet.id} este acum „{status_nou}”.", "success")
     return redirect(url_for("tickets.detaliu", tichet_id=tichet.id))
+
+
+@bp.route("/<int:tichet_id>/comentarii", methods=["POST"])
+@login_required
+def comenteaza(tichet_id):
+    """F9 – Comentarii pe tichet, cu autor și dată."""
+    tichet = tichet_vizibil_sau_403(tichet_id)
+    text = request.form.get("text", "").strip()
+    if not text:
+        flash("Comentariul nu poate fi gol.", "danger")
+    else:
+        db.session.add(Comment(tichet=tichet, autor=current_user, text=text))
+        db.session.commit()
+    return redirect(url_for("tickets.detaliu", tichet_id=tichet.id) + "#comentarii")

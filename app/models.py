@@ -85,6 +85,13 @@ class Ticket(db.Model):
         cascade="all, delete-orphan",
     )
 
+    comentarii = db.relationship(
+        "Comment",
+        back_populates="tichet",
+        order_by="Comment.creat_la",
+        cascade="all, delete-orphan",
+    )
+
     def schimba_status(self, status_nou, utilizator):
         """Schimbă statusul și înregistrează schimbarea în istoric (F8)."""
         self.istoric.append(
@@ -106,3 +113,14 @@ class TicketHistory(db.Model):
 
     tichet = db.relationship("Ticket", back_populates="istoric")
     utilizator = db.relationship("User")
+
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey("ticket.id"), nullable=False)
+    autor_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    creat_la = db.Column(db.DateTime(timezone=True), nullable=False, default=acum)
+
+    tichet = db.relationship("Ticket", back_populates="comentarii")
+    autor = db.relationship("User")

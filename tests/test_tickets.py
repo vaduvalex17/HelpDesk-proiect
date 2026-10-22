@@ -213,3 +213,34 @@ def test_angajatul_nu_schimba_statusul(app, client):
     autentifica(client)
     raspuns = client.post(f"/tickets/{tichet_id}/status", data={"status": "În lucru"})
     assert raspuns.status_code == 403
+
+
+def test_angajatul_si_tehnicianul_comenteaza(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    preia_ca_tehnician(client, tichet_id)
+    client.post(f"/tickets/{tichet_id}/comentarii", data={"text": "Vin în 10 minute."})
+    client.post("/logout")
+    autentifica(client)
+    client.post(f"/tickets/{tichet_id}/comentarii", data={"text": "Mulțumesc!"})
+
+    comentarii = db.session.get(Ticket, tichet_id).comentarii
+    assert [(c.autor.email, c.text) for c in comentarii] == [
+        ("tehnician@technova.test", "Vin în 10 minute."),
+        ("angajat@technova.test", "Mulțumesc!"),
+    ]
+    pagina = client.get(f"/tickets/{tichet_id}").get_data(as_text=True)
+    assert "Vin în 10 minute." in pagina
+
+
+def test_comentariu_gol_respins(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    autentifica(client)
+    client.post(f"/tickets/{tichet_id}/comentarii", data={"text": "   "})
+    assert db.session.get(Ticket, tichet_id).comentarii == []
+
+
+def test_angajatul_nu_comenteaza_pe_tichetul_altuia(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat2@technova.test")
+    autentifica(client)
+    raspuns = client.post(f"/tickets/{tichet_id}/comentarii", data={"text": "Salut"})
+    assert raspuns.status_code == 403
