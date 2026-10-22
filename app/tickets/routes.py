@@ -1,6 +1,6 @@
-"""Tichete: creare (F2), listă (F3)."""
+"""Tichete: creare (F2), listă (F3), detaliu (F4)."""
 
-from flask import flash, redirect, render_template, request, url_for
+from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from ..extensions import db
@@ -45,7 +45,7 @@ def creeaza():
             db.session.add(tichet)
             db.session.commit()
             flash(f"Tichetul #{tichet.id} a fost creat.", "success")
-            return redirect(url_for("tickets.lista"))
+            return redirect(url_for("tickets.detaliu", tichet_id=tichet.id))
 
     return render_template(
         "tickets/new.html", categorii=categorii, prioritati=PRIORITATI, erori=erori
@@ -60,3 +60,13 @@ def lista():
         db.select(Ticket).filter_by(autor_id=current_user.id).order_by(Ticket.creat_la.desc())
     ).scalars().all()
     return render_template("tickets/list.html", tichete=tichete)
+
+
+@bp.route("/<int:tichet_id>")
+@login_required
+def detaliu(tichet_id):
+    """F4 – Detaliu tichet: un angajat nu poate deschide tichetul altui angajat."""
+    tichet = db.get_or_404(Ticket, tichet_id)
+    if current_user.rol == "angajat" and tichet.autor_id != current_user.id:
+        abort(403)
+    return render_template("tickets/detail.html", tichet=tichet)

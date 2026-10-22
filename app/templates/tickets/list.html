@@ -16,7 +16,7 @@
       {% for tichet in tichete %}
       <tr>
         <td>#{{ tichet.id }}</td>
-        <td>{{ tichet.titlu }}</td>
+        <td><a href="{{ url_for('tickets.detaliu', tichet_id=tichet.id) }}">{{ tichet.titlu }}</a></td>
         <td>{{ badge_prioritate(tichet.prioritate) }}</td>
         <td>{{ badge_status(tichet.status) }}</td>
         <td>{{ tichet.creat_la.strftime("%d.%m.%Y %H:%M") }}</td>
