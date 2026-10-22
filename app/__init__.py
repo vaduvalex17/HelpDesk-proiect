@@ -30,6 +30,10 @@ def create_app(config=None):
 
     app.register_blueprint(auth_bp)
 
+    from .tickets import bp as tickets_bp
+
+    app.register_blueprint(tickets_bp)
+
     @app.route("/")
     @login_required
     def index():
