@@ -4,6 +4,7 @@ import os
 
 from flask import Flask, render_template
 
+from . import models  # noqa: F401  (înregistrează modelele)
 from .extensions import db
 
 
