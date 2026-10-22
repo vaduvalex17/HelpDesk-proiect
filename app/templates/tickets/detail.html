@@ -1,6 +1,24 @@
 {% extends "base.html" %}
 {% from "_macros.html" import badge_prioritate, badge_status %}
-{% block title %}Tichet #{{ tichet.id }} – HelpDesk IT<div class="card shadow-sm mt-3">
+{% block title %}Tichet #{{ tichet.id }} – HelpDesk IT<div class="card shadow-sm mt-3" id="comentarii">
+  <div class="card-body">
+    <h2 class="h6">Comentarii</h2>
+    {% for comentariu in tichet.comentarii %}
+    <div class="border-start border-3 ps-3 mb-3">
+      <div class="small text-muted">{{ comentariu.autor.nume }} · {{ comentariu.creat_la.strftime("%d.%m.%Y %H:%M") }}</div>
+      <div style="white-space: pre-line">{{ comentariu.text }}</div>
+    </div>
+    {% else %}
+    <p class="small text-muted">Niciun comentariu încă.</p>
+    {% endfor %}
+    <form method="post" action="{{ url_for('tickets.comenteaza', tichet_id=tichet.id) }}">
+      <textarea name="text" class="form-control mb-2" rows="3" placeholder="Scrie un comentariu…" required></textarea>
+      <button type="submit" class="btn btn-outline-primary btn-sm">Adaugă comentariu</button>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm mt-3">
   <div class="card-body">
     <h2 class="h6">Istoric</h2>
     <ul class="list-unstyled mb-0">
@@ -59,6 +77,24 @@
   </div>
 </div>
 {% endif %}
+<div class="card shadow-sm mt-3" id="comentarii">
+  <div class="card-body">
+    <h2 class="h6">Comentarii</h2>
+    {% for comentariu in tichet.comentarii %}
+    <div class="border-start border-3 ps-3 mb-3">
+      <div class="small text-muted">{{ comentariu.autor.nume }} · {{ comentariu.creat_la.strftime("%d.%m.%Y %H:%M") }}</div>
+      <div style="white-space: pre-line">{{ comentariu.text }}</div>
+    </div>
+    {% else %}
+    <p class="small text-muted">Niciun comentariu încă.</p>
+    {% endfor %}
+    <form method="post" action="{{ url_for('tickets.comenteaza', tichet_id=tichet.id) }}">
+      <textarea name="text" class="form-control mb-2" rows="3" placeholder="Scrie un comentariu…" required></textarea>
+      <button type="submit" class="btn btn-outline-primary btn-sm">Adaugă comentariu</button>
+    </form>
+  </div>
+</div>
+
 <div class="card shadow-sm mt-3">
   <div class="card-body">
     <h2 class="h6">Istoric</h2>
