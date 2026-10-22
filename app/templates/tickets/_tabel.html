@@ -1,0 +1,30 @@
+{% from "_macros.html" import badge_prioritate, badge_status %}
+{% macro tabel_tichete(tichete, mesaj_gol, cu_autor=false, actiune=none) -%}
+{% if tichete %}
+<div class="table-responsive">
+  <table class="table table-hover bg-white shadow-sm align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Nr.</th><th>Titlu</th>{% if cu_autor %}<th>Autor</th>{% endif %}
+        <th>Prioritate</th><th>Status</th><th>Data</th>{% if actiune %}<th></th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for tichet in tichete %}
+      <tr>
+        <td>#{{ tichet.id }}</td>
+        <td><a href="{{ url_for('tickets.detaliu', tichet_id=tichet.id) }}">{{ tichet.titlu }}</a></td>
+        {% if cu_autor %}<td>{{ tichet.autor.nume }}</td>{% endif %}
+        <td>{{ badge_prioritate(tichet.prioritate) }}</td>
+        <td>{{ badge_status(tichet.status) }}</td>
+        <td>{{ tichet.creat_la.strftime("%d.%m.%Y %H:%M") }}</td>
+        {% if actiune %}<td class="text-end">{{ actiune(tichet) }}</td>{% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-light border">{{ mesaj_gol }}</div>
+{% endif %}
+{%- endmacro %}

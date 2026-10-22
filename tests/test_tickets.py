@@ -88,3 +88,41 @@ def test_tehnicianul_vede_orice_tichet(app, client):
 def test_tichet_inexistent_404(client):
     autentifica(client)
     assert client.get("/tickets/999").status_code == 404
+
+
+def test_angajatul_nu_are_acces_la_panou(client):
+    autentifica(client)
+    assert client.get("/tickets/tech").status_code == 403
+
+
+def test_panoul_arata_tichetele_neatribuite(app, client):
+    creeaza_tichet_ca(client, "angajat@technova.test")
+    autentifica(client, email="tehnician@technova.test")
+    pagina = client.get("/tickets/tech").get_data(as_text=True)
+    assert "Laptopul nu pornește" in pagina
+    assert "Preia" in pagina
+
+
+def test_tehnicianul_preia_tichetul(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    autentifica(client, email="tehnician@technova.test")
+    client.post(f"/tickets/{tichet_id}/preia")
+    tichet = db.session.get(Ticket, tichet_id)
+    assert tichet.status == "În lucru"
+    assert tichet.tehnician.email == "tehnician@technova.test"
+
+
+def test_tichetul_nu_poate_fi_preluat_de_doua_ori(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    autentifica(client, email="tehnician@technova.test")
+    client.post(f"/tickets/{tichet_id}/preia")
+    client.post("/logout")
+    autentifica(client, email="manager@technova.test")
+    client.post(f"/tickets/{tichet_id}/preia")
+    assert db.session.get(Ticket, tichet_id).tehnician.email == "tehnician@technova.test"
+
+
+def test_angajatul_nu_poate_prelua(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    autentifica(client)
+    assert client.post(f"/tickets/{tichet_id}/preia").status_code == 403

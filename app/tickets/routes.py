@@ -1,8 +1,9 @@
-"""Tichete: creare (F2), listă (F3), detaliu (F4)."""
+"""Tichete: creare (F2), listă (F3), detaliu (F4), panou tehnician și preluare (F6)."""
 
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
+from ..auth.decorators import role_required
 from ..extensions import db
 from ..models import PRIORITATI, Category, Ticket
 from . import bp
@@ -70,3 +71,35 @@ def detaliu(tichet_id):
     if current_user.rol == "angajat" and tichet.autor_id != current_user.id:
         abort(403)
     return render_template("tickets/detail.html", tichet=tichet)
+
+
+@bp.route("/tech")
+@role_required("tehnician", "manager")
+def panou_tehnician():
+    """F6 – Panoul tehnicianului: tichetele neatribuite și tichetele mele."""
+    neatribuite = db.session.execute(
+        db.select(Ticket)
+        .filter(Ticket.tehnician_id.is_(None), Ticket.status == "Nou")
+        .order_by(Ticket.creat_la)
+    ).scalars().all()
+    ale_mele = db.session.execute(
+        db.select(Ticket)
+        .filter(Ticket.tehnician_id == current_user.id, Ticket.status != "Închis")
+        .order_by(Ticket.actualizat_la.desc())
+    ).scalars().all()
+    return render_template("tickets/tech.html", neatribuite=neatribuite, ale_mele=ale_mele)
+
+
+@bp.route("/<int:tichet_id>/preia", methods=["POST"])
+@role_required("tehnician", "manager")
+def preia(tichet_id):
+    """F6 – Preluare: tehnicianul devine responsabil, tichetul trece „În lucru”."""
+    tichet = db.get_or_404(Ticket, tichet_id)
+    if tichet.tehnician_id is not None or tichet.status != "Nou":
+        flash(f"Tichetul #{tichet.id} a fost deja preluat.", "warning")
+        return redirect(url_for("tickets.panou_tehnician"))
+    tichet.tehnician = current_user
+    tichet.status = "În lucru"
+    db.session.commit()
+    flash(f"Ai preluat tichetul #{tichet.id}.", "success")
+    return redirect(url_for("tickets.detaliu", tichet_id=tichet.id))
