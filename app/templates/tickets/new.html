@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Tichet nou – HelpDesk IT{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Tichet nou</h1>
+{% for eroare in erori %}
+<div class="alert alert-danger">{{ eroare }}</div>
+{% endfor %}
+<form method="post" class="card card-body shadow-sm">
+  <div class="mb-3">
+    <label for="titlu" class="form-label">Titlu</label>
+    <input type="text" class="form-control" id="titlu" name="titlu" maxlength="150"
+           value="{{ request.form.titlu }}" required>
+  </div>
+  <div class="mb-3">
+    <label for="descriere" class="form-label">Descriere</label>
+    <textarea class="form-control" id="descriere" name="descriere" rows="5" required>{{ request.form.descriere }}</textarea>
+  </div>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label for="categorie_id" class="form-label">Categorie</label>
+      <select class="form-select" id="categorie_id" name="categorie_id" required>
+        {% for categorie in categorii %}
+        <option value="{{ categorie.id }}" {% if request.form.categorie_id == categorie.id|string %}selected{% endif %}>{{ categorie.nume }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6 mb-3">
+      <label for="prioritate" class="form-label">Prioritate</label>
+      <select class="form-select" id="prioritate" name="prioritate" required>
+        {% for prioritate in prioritati %}
+        <option {% if (request.form.prioritate or "Medie") == prioritate %}selected{% endif %}>{{ prioritate }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div>
+    <button type="submit" class="btn btn-primary">Trimite tichetul</button>
+  </div>
+</form>
+{% endblock %}
