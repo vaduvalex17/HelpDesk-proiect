@@ -1,6 +1,22 @@
 {% extends "base.html" %}
 {% from "_macros.html" import badge_prioritate, badge_status %}
-{% block title %}Tichet #{{ tichet.id }} – HelpDesk IT{% endblock %}
+{% block title %}Tichet #{{ tichet.id }} – HelpDesk IT<div class="card shadow-sm mt-3">
+  <div class="card-body">
+    <h2 class="h6">Istoric</h2>
+    <ul class="list-unstyled mb-0">
+      {% for intrare in tichet.istoric %}
+      <li class="small">
+        <span class="text-muted">{{ intrare.modificat_la.strftime("%d.%m.%Y %H:%M") }}</span>
+        – {{ intrare.utilizator.nume }}:
+        {% if intrare.status_vechi and intrare.status_vechi != intrare.status_nou %}{{ intrare.status_vechi }} → {% endif %}{{ intrare.status_nou }}
+      </li>
+      {% else %}
+      <li class="small text-muted">Nicio schimbare înregistrată.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
 {% block content %}
 <a href="{{ url_for('tickets.lista') }}" class="btn btn-link px-0 mb-2">&larr; Înapoi la listă</a>
 <div class="card shadow-sm">
@@ -21,6 +37,13 @@
   </div>
 </div>
 
+{% if status_urmator %}
+<form method="post" action="{{ url_for('tickets.schimba_status', tichet_id=tichet.id) }}" class="mt-3">
+  <input type="hidden" name="status" value="{{ status_urmator }}">
+  <button type="submit" class="btn btn-success">Marchează „{{ status_urmator }}”</button>
+</form>
+{% endif %}
+
 {% if tehnicieni and tichet.status != "Închis" %}
 <div class="card shadow-sm mt-3">
   <div class="card-body">
@@ -36,4 +59,20 @@
   </div>
 </div>
 {% endif %}
+<div class="card shadow-sm mt-3">
+  <div class="card-body">
+    <h2 class="h6">Istoric</h2>
+    <ul class="list-unstyled mb-0">
+      {% for intrare in tichet.istoric %}
+      <li class="small">
+        <span class="text-muted">{{ intrare.modificat_la.strftime("%d.%m.%Y %H:%M") }}</span>
+        – {{ intrare.utilizator.nume }}:
+        {% if intrare.status_vechi and intrare.status_vechi != intrare.status_nou %}{{ intrare.status_vechi }} → {% endif %}{{ intrare.status_nou }}
+      </li>
+      {% else %}
+      <li class="small text-muted">Nicio schimbare înregistrată.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
 {% endblock %}

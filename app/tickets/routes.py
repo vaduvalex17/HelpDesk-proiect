@@ -1,11 +1,11 @@
-"""Rutele pentru tichete: creare, listă, detaliu, preluare, atribuire (F2–F4, F6, F7)."""
+"""Rutele pentru tichete: creare, listă, detaliu, preluare, atribuire (F2–F4, F6–F8)."""
 
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from ..auth.decorators import role_required
 from ..extensions import db
-from ..models import PRIORITATI, Category, Ticket, User
+from ..models import PRIORITATI, URMATORUL_STATUS, Category, Ticket, User
 from . import bp
 
 
@@ -51,6 +51,7 @@ def creeaza():
                 categorie=categorie,
                 autor=current_user,
             )
+            tichet.schimba_status("Nou", current_user)
             db.session.add(tichet)
             db.session.commit()
             flash(f"Tichetul #{tichet.id} a fost creat.", "success")
@@ -81,7 +82,22 @@ def detaliu(tichet_id):
     tehnicieni = []
     if current_user.are_rol("manager"):
         tehnicieni = tehnicieni_activi()
-    return render_template("tickets/detail.html", tichet=tichet, tehnicieni=tehnicieni)
+    status_urmator = None
+    if poate_schimba_status(tichet):
+        status_urmator = URMATORUL_STATUS.get(tichet.status)
+    return render_template(
+        "tickets/detail.html",
+        tichet=tichet,
+        tehnicieni=tehnicieni,
+        status_urmator=status_urmator,
+    )
+
+
+def poate_schimba_status(tichet):
+    """Statusul îl schimbă tehnicianul responsabil sau managerul."""
+    return current_user.are_rol("manager") or (
+        current_user.are_rol("tehnician") and tichet.tehnician_id == current_user.id
+    )
 
 
 @bp.route("/tech")
@@ -110,7 +126,7 @@ def preia(tichet_id):
         flash(f"Tichetul #{tichet.id} a fost deja preluat.", "warning")
         return redirect(url_for("tickets.panou_tehnician"))
     tichet.tehnician = current_user
-    tichet.status = "În lucru"
+    tichet.schimba_status("În lucru", current_user)
     db.session.commit()
     flash(f"Ai preluat tichetul #{tichet.id}.", "success")
     return redirect(url_for("tickets.detaliu", tichet_id=tichet.id))
@@ -129,7 +145,26 @@ def atribuie(tichet_id):
     else:
         tichet.tehnician = tehnician
         if tichet.status == "Nou":
-            tichet.status = "În lucru"
+            tichet.schimba_status("În lucru", current_user)
         db.session.commit()
         flash(f"Tichetul #{tichet.id} a fost atribuit lui {tehnician.nume}.", "success")
+    return redirect(url_for("tickets.detaliu", tichet_id=tichet.id))
+
+
+@bp.route("/<int:tichet_id>/status", methods=["POST"])
+@role_required("tehnician", "manager")
+def schimba_status(tichet_id):
+    """F8 – Tichetul avansează o etapă; schimbarea rămâne în istoric."""
+    tichet = db.get_or_404(Ticket, tichet_id)
+    if not poate_schimba_status(tichet):
+        abort(403)
+    status_nou = request.form.get("status", "")
+    if URMATORUL_STATUS.get(tichet.status) != status_nou:
+        flash("Tranziție de status invalidă.", "danger")
+    else:
+        if tichet.tehnician is None:
+            tichet.tehnician = current_user
+        tichet.schimba_status(status_nou, current_user)
+        db.session.commit()
+        flash(f"Tichetul #{tichet.id} este acum „{status_nou}”.", "success")
     return redirect(url_for("tickets.detaliu", tichet_id=tichet.id))

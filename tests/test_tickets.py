@@ -163,3 +163,53 @@ def test_tehnicianul_nu_poate_atribui(app, client):
         data={"tehnician_id": id_utilizator("tehnician@technova.test")},
     )
     assert raspuns.status_code == 403
+
+
+def preia_ca_tehnician(client, tichet_id):
+    autentifica(client, email="tehnician@technova.test")
+    client.post(f"/tickets/{tichet_id}/preia")
+
+
+def test_status_avanseaza_si_se_inregistreaza_in_istoric(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    preia_ca_tehnician(client, tichet_id)
+    client.post(f"/tickets/{tichet_id}/status", data={"status": "Rezolvat"})
+    client.post(f"/tickets/{tichet_id}/status", data={"status": "Închis"})
+
+    tichet = db.session.get(Ticket, tichet_id)
+    assert tichet.status == "Închis"
+    assert [(h.status_vechi, h.status_nou) for h in tichet.istoric] == [
+        (None, "Nou"),
+        ("Nou", "În lucru"),
+        ("În lucru", "Rezolvat"),
+        ("Rezolvat", "Închis"),
+    ]
+    pagina = client.get(f"/tickets/{tichet_id}").get_data(as_text=True)
+    assert "Rezolvat → Închis" in pagina
+
+
+def test_nu_se_pot_sari_etape(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    preia_ca_tehnician(client, tichet_id)
+    client.post(f"/tickets/{tichet_id}/status", data={"status": "Închis"})
+    assert db.session.get(Ticket, tichet_id).status == "În lucru"
+
+
+def test_alt_tehnician_nu_schimba_statusul(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    autentifica(client, email="manager@technova.test")
+    client.post(
+        f"/tickets/{tichet_id}/atribuie",
+        data={"tehnician_id": id_utilizator("manager@technova.test")},
+    )
+    client.post("/logout")
+    autentifica(client, email="tehnician@technova.test")
+    raspuns = client.post(f"/tickets/{tichet_id}/status", data={"status": "Rezolvat"})
+    assert raspuns.status_code == 403
+
+
+def test_angajatul_nu_schimba_statusul(app, client):
+    tichet_id = creeaza_tichet_ca(client, "angajat@technova.test")
+    autentifica(client)
+    raspuns = client.post(f"/tickets/{tichet_id}/status", data={"status": "În lucru"})
+    assert raspuns.status_code == 403
