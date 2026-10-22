@@ -3,9 +3,10 @@
 import os
 
 from flask import Flask, render_template
+from flask_login import login_required
 
 from . import models  # noqa: F401  (înregistrează modelele)
-from .extensions import db
+from .extensions import db, login_manager
 
 
 def create_app(config=None):
@@ -23,8 +24,14 @@ def create_app(config=None):
     os.makedirs(app.instance_path, exist_ok=True)
 
     db.init_app(app)
+    login_manager.init_app(app)
+
+    from .auth import bp as auth_bp
+
+    app.register_blueprint(auth_bp)
 
     @app.route("/")
+    @login_required
     def index():
         return render_template("index.html")
 
