@@ -11,11 +11,21 @@
     <div class="container">
       <a class="navbar-brand" href="{{ url_for('tickets.lista') }}">HelpDesk IT</a>
       {% if current_user.is_authenticated %}
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#meniu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="meniu">
+        <ul class="navbar-nav me-auto">
+          {% block meniu %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('tickets.lista') }}">Tichetele mele</a></li>
+          {% endblock %}
+        </ul>
       <div class="d-flex align-items-center gap-3">
         <span class="navbar-text text-white">{{ current_user.nume }} ({{ current_user.rol }})</span>
         <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
           <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
         </form>
+      </div>
       </div>
       {% endif %}
     </div>
