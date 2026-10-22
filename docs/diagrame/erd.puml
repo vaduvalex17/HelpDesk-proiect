@@ -1,0 +1,65 @@
+@startuml erd
+' Modelul bazei de date – HelpDesk IT (issue #9)
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+
+entity "User" as User {
+  * id : INTEGER <<PK>>
+  --
+  * nume : VARCHAR(100)
+  * email : VARCHAR(120) <<unique>>
+  * parola_hash : VARCHAR(255)
+  * rol : VARCHAR(20)  ' angajat | tehnician | manager
+  * activ : BOOLEAN
+  * creat_la : DATETIME
+}
+
+entity "Category" as Category {
+  * id : INTEGER <<PK>>
+  --
+  * nume : VARCHAR(50) <<unique>>
+  * activa : BOOLEAN
+}
+
+entity "Ticket" as Ticket {
+  * id : INTEGER <<PK>>
+  --
+  * titlu : VARCHAR(150)
+  * descriere : TEXT
+  * prioritate : VARCHAR(10)  ' Scăzută | Medie | Ridicată | Critică
+  * status : VARCHAR(10)      ' Nou | În lucru | Rezolvat | Închis
+  * autor_id : INTEGER <<FK>>
+  tehnician_id : INTEGER <<FK>>
+  * categorie_id : INTEGER <<FK>>
+  * creat_la : DATETIME
+  * actualizat_la : DATETIME
+}
+
+entity "Comment" as Comment {
+  * id : INTEGER <<PK>>
+  --
+  * ticket_id : INTEGER <<FK>>
+  * autor_id : INTEGER <<FK>>
+  * text : TEXT
+  * creat_la : DATETIME
+}
+
+entity "TicketHistory" as TicketHistory {
+  * id : INTEGER <<PK>>
+  --
+  * ticket_id : INTEGER <<FK>>
+  * utilizator_id : INTEGER <<FK>>
+  status_vechi : VARCHAR(10)
+  * status_nou : VARCHAR(10)
+  * modificat_la : DATETIME
+}
+
+User ||--o{ Ticket : "deschide (autor)"
+User |o--o{ Ticket : "rezolvă (tehnician)"
+Category ||--o{ Ticket : "clasifică"
+Ticket ||--o{ Comment : "are"
+User ||--o{ Comment : "scrie"
+Ticket ||--o{ TicketHistory : "are"
+User ||--o{ TicketHistory : "modifică"
+@enduml
