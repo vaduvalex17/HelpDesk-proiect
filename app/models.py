@@ -2,9 +2,10 @@
 
 from datetime import UTC, datetime
 
+from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from .extensions import db
+from .extensions import db, login_manager
 
 ROLURI = ("angajat", "tehnician", "manager")
 PRIORITATI = ("Scăzută", "Medie", "Ridicată", "Critică")
@@ -15,7 +16,7 @@ def acum():
     return datetime.now(UTC)
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nume = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -31,8 +32,18 @@ class User(db.Model):
     def verifica_parola(self, parola):
         return check_password_hash(self.parola_hash, parola)
 
+    @property
+    def is_active(self):
+        # Flask-Login refuză autentificarea utilizatorilor dezactivați (F12)
+        return self.activ
+
     def __repr__(self):
         return f"<User {self.email} ({self.rol})>"
+
+
+@login_manager.user_loader
+def incarca_utilizator(user_id):
+    return db.session.get(User, int(user_id))
 
 
 class Category(db.Model):
