@@ -1,42 +1,16 @@
+{#
+  F4 – Pagina unui tichet. Primește din ruta tickets.detaliu:
+    tichet          – obiectul Ticket (cu .autor, .tehnician, .categorie, .comentarii, .istoric)
+    tehnicieni      – lista pentru atribuire (plină doar pentru manager)
+    status_urmator  – textul statusului următor sau None dacă utilizatorul nu poate schimba statusul
+#}
 {% extends "base.html" %}
 {% from "_macros.html" import badge_prioritate, badge_status %}
-{% block title %}Tichet #{{ tichet.id }} – HelpDesk IT<div class="card shadow-sm mt-3" id="comentarii">
-  <div class="card-body">
-    <h2 class="h6">Comentarii</h2>
-    {% for comentariu in tichet.comentarii %}
-    <div class="border-start border-3 ps-3 mb-3">
-      <div class="small text-muted">{{ comentariu.autor.nume }} · {{ comentariu.creat_la.strftime("%d.%m.%Y %H:%M") }}</div>
-      <div style="white-space: pre-line">{{ comentariu.text }}</div>
-    </div>
-    {% else %}
-    <p class="small text-muted">Niciun comentariu încă.</p>
-    {% endfor %}
-    <form method="post" action="{{ url_for('tickets.comenteaza', tichet_id=tichet.id) }}">
-      <textarea name="text" class="form-control mb-2" rows="3" placeholder="Scrie un comentariu…" required></textarea>
-      <button type="submit" class="btn btn-outline-primary btn-sm">Adaugă comentariu</button>
-    </form>
-  </div>
-</div>
-
-<div class="card shadow-sm mt-3">
-  <div class="card-body">
-    <h2 class="h6">Istoric</h2>
-    <ul class="list-unstyled mb-0">
-      {% for intrare in tichet.istoric %}
-      <li class="small">
-        <span class="text-muted">{{ intrare.modificat_la.strftime("%d.%m.%Y %H:%M") }}</span>
-        – {{ intrare.utilizator.nume }}:
-        {% if intrare.status_vechi and intrare.status_vechi != intrare.status_nou %}{{ intrare.status_vechi }} → {% endif %}{{ intrare.status_nou }}
-      </li>
-      {% else %}
-      <li class="small text-muted">Nicio schimbare înregistrată.</li>
-      {% endfor %}
-    </ul>
-  </div>
-</div>
-{% endblock %}
+{% block title %}Tichet #{{ tichet.id }} – HelpDesk IT{% endblock %}
 {% block content %}
 <a href="{{ url_for('tickets.lista') }}" class="btn btn-link px-0 mb-2">&larr; Înapoi la listă</a>
+
+{# Informațiile principale ale tichetului #}
 <div class="card shadow-sm">
   <div class="card-body">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
@@ -51,10 +25,12 @@
       <dt class="col-sm-3">Actualizat la</dt><dd class="col-sm-9">{{ tichet.actualizat_la.strftime("%d.%m.%Y %H:%M") }}</dd>
     </dl>
     <hr>
+    {# pre-line păstrează rândurile noi scrise de utilizator în descriere #}
     <p class="mb-0" style="white-space: pre-line">{{ tichet.descriere }}</p>
   </div>
 </div>
 
+{# F8 – Butonul pentru etapa următoare (doar managerul sau tehnicianul responsabil) #}
 {% if status_urmator %}
 <form method="post" action="{{ url_for('tickets.schimba_status', tichet_id=tichet.id) }}" class="mt-3">
   <input type="hidden" name="status" value="{{ status_urmator }}">
@@ -62,6 +38,7 @@
 </form>
 {% endif %}
 
+{# F7 – Atribuirea (doar managerul primește lista de tehnicieni) #}
 {% if tehnicieni and tichet.status != "Închis" %}
 <div class="card shadow-sm mt-3">
   <div class="card-body">
@@ -77,6 +54,8 @@
   </div>
 </div>
 {% endif %}
+
+{# F9 – Comentarii; id="comentarii" permite saltul direct aici după adăugarea unui comentariu #}
 <div class="card shadow-sm mt-3" id="comentarii">
   <div class="card-body">
     <h2 class="h6">Comentarii</h2>
@@ -95,6 +74,7 @@
   </div>
 </div>
 
+{# F8 – Istoricul schimbărilor de status (cine, când, din ce status în ce status) #}
 <div class="card shadow-sm mt-3">
   <div class="card-body">
     <h2 class="h6">Istoric</h2>
@@ -103,6 +83,7 @@
       <li class="small">
         <span class="text-muted">{{ intrare.modificat_la.strftime("%d.%m.%Y %H:%M") }}</span>
         – {{ intrare.utilizator.nume }}:
+        {# La prima intrare (crearea) nu există status vechi, deci afișăm doar „Nou” #}
         {% if intrare.status_vechi and intrare.status_vechi != intrare.status_nou %}{{ intrare.status_vechi }} → {% endif %}{{ intrare.status_nou }}
       </li>
       {% else %}
