@@ -1,8 +1,14 @@
+{#
+  Macro-uri (funcții Jinja) refolosite în mai multe pagini: insignele colorate
+  pentru prioritate și status. Se importă cu {% from "_macros.html" import ... %}.
+#}
+{# Insignă colorată după prioritate: gri, albastru, galben, roșu #}
 {% macro badge_prioritate(prioritate) -%}
 {% set culori = {"Scăzută": "secondary", "Medie": "info", "Ridicată": "warning", "Critică": "danger"} %}
 <span class="badge text-bg-{{ culori.get(prioritate, 'secondary') }}">{{ prioritate }}</span>
 {%- endmacro %}
 
+{# Insignă colorată după status: albastru, galben, verde, negru #}
 {% macro badge_status(status) -%}
 {% set culori = {"Nou": "primary", "În lucru": "warning", "Rezolvat": "success", "Închis": "dark"} %}
 <span class="badge text-bg-{{ culori.get(status, 'secondary') }}">{{ status }}</span>

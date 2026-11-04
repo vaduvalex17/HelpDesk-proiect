@@ -1,15 +1,22 @@
+{#
+  Șablonul de bază: bara de navigare, mesajele flash și Bootstrap 5.
+  Toate celelalte pagini îl extind cu {% extends "base.html" %} și își pun conținutul
+  în blocurile „title” și „content”.
+#}
 <!doctype html>
 <html lang="ro">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}HelpDesk IT{% endblock %}</title>
+  {# Bootstrap 5 de pe CDN – stilurile gata făcute (butoane, tabele, design responsive – N4) #}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
     <div class="container">
       <a class="navbar-brand" href="{{ url_for('tickets.lista') }}">HelpDesk IT</a>
+      {# Meniul și butonul de logout apar doar după autentificare #}
       {% if current_user.is_authenticated %}
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#meniu">
         <span class="navbar-toggler-icon"></span>
@@ -18,6 +25,7 @@
         <ul class="navbar-nav me-auto">
           {% block meniu %}
           <li class="nav-item"><a class="nav-link" href="{{ url_for('tickets.lista') }}">Tichetele mele</a></li>
+          {# F5 – meniul depinde de rol: angajatul nu vede panoul tehnicianului #}
           {% if current_user.are_rol("tehnician", "manager") %}
           <li class="nav-item"><a class="nav-link" href="{{ url_for('tickets.panou_tehnician') }}">Panou tehnician</a></li>
           {% endif %}
@@ -25,6 +33,7 @@
         </ul>
       <div class="d-flex align-items-center gap-3">
         <span class="navbar-text text-white">{{ current_user.nume }} ({{ current_user.rol }})</span>
+        {# Logout prin POST (nu printr-un link), vezi auth/routes.py #}
         <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
           <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
         </form>
@@ -34,6 +43,7 @@
     </div>
   </nav>
   <main class="container">
+    {# Mesajele flash() din rute; categoria (success, danger…) devine culoarea alertei #}
     {% with mesaje = get_flashed_messages(with_categories=true) %}
       {% for categorie, mesaj in mesaje %}
       <div class="alert alert-{{ categorie }}">{{ mesaj }}</div>
