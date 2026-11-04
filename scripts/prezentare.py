@@ -1,7 +1,10 @@
 """Pornește HelpDesk IT pentru prezentare și deschide aplicația în browser.
 
-Funcționează pe Windows, Linux și macOS și folosește doar biblioteca standard Python,
-deci se poate rula înainte de a instala ceva.
+Pe Windows nu se rulează direct: se pornește cu dublu-clic pe fișierele din folderul
+proiectului „1. Porneste aplicatia.bat” și „2. Ruleaza testele.bat”, care găsesc
+(sau instalează) Python și apoi apelează acest script.
+
+Folosește doar biblioteca standard Python, deci merge înainte de a instala ceva.
 
 Ce face, pe rând:
     1. creează mediul virtual „.venv” (doar prima dată);
@@ -10,11 +13,12 @@ Ce face, pe rând:
     4. pornește serverul Flask pe primul port liber începând de la 5000;
     5. deschide pagina de login în browserul implicit.
 
-Utilizare (din folderul proiectului):
-    python scripts/prezentare.py               # Windows: py scripts\\prezentare.py
+Utilizare din terminal (din folderul proiectului):
+    python scripts/prezentare.py               # pornește aplicația
     python scripts/prezentare.py --pastreaza   # nu reseta datele (păstrează tichetele create)
+    python scripts/prezentare.py --teste       # rulează testele automate și afișează rezultatul
 
-Oprire: Ctrl+C în fereastra terminalului.
+Oprire: închiderea ferestrei sau Ctrl+C.
 """
 
 import os
@@ -28,9 +32,6 @@ from pathlib import Path
 
 RADACINA = Path(__file__).resolve().parent.parent  # folderul proiectului
 VENV = RADACINA / ".venv"
-CERINTE = RADACINA / "requirements.txt"
-MARCAJ = VENV / ".instalat"  # fișier gol: când există și e mai nou decât requirements.txt,
-#                              dependențele sunt deja instalate
 
 CONTURI = [
     ("Angajat", "angajat@technova.test"),
@@ -45,6 +46,14 @@ def pas(mesaj):
     print(f"\n==> {mesaj}", flush=True)
 
 
+def chenar(*randuri):
+    """Afișează un mesaj important într-un chenar, ca să iasă în evidență."""
+    print("\n" + "=" * 62)
+    for rand in randuri:
+        print(f"  {rand}")
+    print("=" * 62 + "\n", flush=True)
+
+
 def python_din_venv():
     """Calea către Python-ul din .venv (diferă între Windows și Linux/macOS)."""
     if os.name == "nt":
@@ -52,24 +61,35 @@ def python_din_venv():
     return VENV / "bin" / "python"
 
 
+def instaleaza(fisier_cerinte, descriere):
+    """Instalează pachetele din fișierul dat, doar dacă nu au fost deja instalate.
+
+    Marcajul (un fișier gol) stă lângă Python-ul din .venv: dacă cineva copiază un .venv
+    făcut pe alt sistem de operare, marcajul lipsește și instalarea se reface.
+    """
+    cerinte = RADACINA / fisier_cerinte
+    marcaj = python_din_venv().parent / f".instalat-{cerinte.stem}"
+    if marcaj.exists() and marcaj.stat().st_mtime >= cerinte.stat().st_mtime:
+        return
+    pas(f"Instalez {descriere} (doar prima dată, are nevoie de internet)")
+    subprocess.run(
+        [python_din_venv(), "-m", "pip", "install", "-q", "--disable-pip-version-check",
+         "-r", cerinte],
+        check=True,
+    )
+    marcaj.touch()
+
+
 def pregateste_mediul():
-    """Creează .venv și instalează dependențele, doar dacă e nevoie."""
+    """Creează .venv și instalează dependențele aplicației, doar dacă e nevoie."""
     # Scriptul poate fi pornit cu un Python vechi al sistemului, deci verificăm versiunea.
     if sys.version_info < (3, 12):  # noqa: UP036
-        sys.exit("Este nevoie de Python 3.12 sau mai nou. Descarcă-l de pe python.org.")
+        sys.exit("Este nevoie de Python 3.12 sau mai nou.")
 
     if not python_din_venv().exists():
-        pas("Creez mediul virtual .venv (doar prima dată)")
+        pas("Pregătesc aplicația pentru prima pornire (durează 1-2 minute)")
         venv.create(VENV, with_pip=True)
-
-    if not MARCAJ.exists() or CERINTE.stat().st_mtime > MARCAJ.stat().st_mtime:
-        pas("Instalez dependențele (Flask, SQLAlchemy, Flask-Login)")
-        subprocess.run(
-            [python_din_venv(), "-m", "pip", "install", "-q", "--disable-pip-version-check",
-             "-r", CERINTE],
-            check=True,
-        )
-        MARCAJ.touch()
+    instaleaza("requirements.txt", "bibliotecile aplicației")
 
 
 def pregateste_datele(pastreaza):
@@ -78,12 +98,12 @@ def pregateste_datele(pastreaza):
     if pastreaza and baza.exists():
         pas("Păstrez datele existente (--pastreaza)")
         return
-    pas("Creez baza de date cu utilizatori de test și tichete demonstrative")
+    pas("Creez datele de test: 3 conturi și 4 tichete demonstrative")
     subprocess.run([python_din_venv(), "seed.py", "--demo"], cwd=RADACINA, check=True)
 
 
 def port_liber(start=5000):
-    """Primul port liber începând cu „start” (pe macOS, 5000 e ocupat uneori de AirPlay)."""
+    """Primul port liber începând cu „start” (dacă 5000 e ocupat de alt program)."""
     for port in range(start, start + 50):
         with socket.socket() as s:
             if s.connect_ex(("127.0.0.1", port)) != 0:
@@ -104,39 +124,62 @@ def asteapta_serverul(port, proces, secunde=30):
     return False
 
 
-def main():
-    os.chdir(RADACINA)
+def porneste_aplicatia(pastreaza):
+    """Pregătește totul, pornește serverul și deschide browserul; rulează până la oprire."""
     pregateste_mediul()
-    pregateste_datele(pastreaza="--pastreaza" in sys.argv)
+    pregateste_datele(pastreaza)
 
     port = port_liber()
     adresa = f"http://127.0.0.1:{port}/login"
-    pas(f"Pornesc serverul pe {adresa}")
+    pas("Pornesc aplicația")
     server = subprocess.Popen(
         [python_din_venv(), "-m", "flask", "--app", "app", "run", "--port", str(port)],
         cwd=RADACINA,
     )
     try:
         if not asteapta_serverul(port, server):
-            sys.exit("Serverul nu a pornit. Verifică mesajele de eroare de mai sus.")
+            sys.exit("Aplicația nu a pornit. Fă o poză acestei ferestre și trimite-o echipei.")
         webbrowser.open(adresa)
-
-        print("\n" + "=" * 62)
-        print(f"  HelpDesk IT rulează pe  {adresa}")
-        print("  (dacă browserul nu s-a deschis, copiază adresa de mai sus)\n")
-        print("  Conturi de test:")
-        for rol, email in CONTURI:
-            print(f"    {rol:<10} {email}")
-        print(f"  Parola pentru toate:  {PAROLA}\n")
-        print("  Oprire: Ctrl+C")
-        print("=" * 62 + "\n", flush=True)
+        chenar(
+            "APLICAȚIA ESTE PORNITĂ – s-a deschis în browser.",
+            f"Dacă browserul nu s-a deschis, scrie în el:  {adresa}",
+            "",
+            "Conturi de test:",
+            *(f"  {rol:<10} {email}" for rol, email in CONTURI),
+            f"Parola pentru toate:  {PAROLA}",
+            "",
+            "NU închide această fereastră cât timp prezinți.",
+            "La final, închide fereastra (X) ca să oprești aplicația.",
+        )
         server.wait()
     except KeyboardInterrupt:
-        print("\nOpresc serverul...")
+        print("\nOpresc aplicația...")
     finally:
         if server.poll() is None:
             server.terminate()
             server.wait()
+
+
+def ruleaza_testele():
+    """Instalează pytest (doar prima dată) și rulează testele automate."""
+    pregateste_mediul()
+    instaleaza("requirements-dev.txt", "uneltele de testare (pytest, Ruff)")
+    pas("Rulez testele automate")
+    rezultat = subprocess.run([python_din_venv(), "-m", "pytest", "-q"], cwd=RADACINA)
+    if rezultat.returncode == 0:
+        chenar("REZULTAT: TOATE TESTELE AU TRECUT.",
+               "Rândul cu „passed” de mai sus arată câte teste au rulat.")
+    else:
+        chenar("REZULTAT: UNELE TESTE AU EȘUAT.",
+               "Fă o poză acestei ferestre și trimite-o echipei.")
+    return rezultat.returncode
+
+
+def main():
+    os.chdir(RADACINA)
+    if "--teste" in sys.argv:
+        sys.exit(ruleaza_testele())
+    porneste_aplicatia(pastreaza="--pastreaza" in sys.argv)
 
 
 if __name__ == "__main__":

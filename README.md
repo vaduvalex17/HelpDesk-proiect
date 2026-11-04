@@ -100,13 +100,15 @@ Apoi o singură comandă, care face tot (mediu virtual, dependențe, date demo, 
 
 | Sistem | Comandă |
 |---|---|
-| 🪟 **Windows** | dublu-clic pe `scripts\prezentare.bat` &nbsp;*sau*&nbsp; `py scripts\prezentare.py` |
+| 🪟 **Windows** | dublu-clic pe **`1. Porneste aplicatia.bat`** (dacă Python lipsește, îl instalează singur) |
 | 🐧 **Linux** / 🍎 **macOS** | `bash scripts/prezentare.sh` |
 
 Aplicația se deschide singură în browser la **http://127.0.0.1:5000** (sau la următorul port liber).
-Oprire: **Ctrl+C** în terminal.
+Oprire: închide fereastra (Windows) sau **Ctrl+C** în terminal.
 
-> 💡 Scriptul resetează datele demo la fiecare pornire. Ca să păstrezi tichetele create, adaugă `--pastreaza`.
+Testele automate se rulează cu dublu-clic pe **`2. Ruleaza testele.bat`** (Windows).
+
+> 💡 Datele demo se resetează la fiecare pornire. Ca să păstrezi tichetele create: `python scripts/prezentare.py --pastreaza`.
 
 ---
 
@@ -241,9 +243,12 @@ HelpDesk-proiect/
 │   └── templates/           # paginile HTML (Jinja2 + Bootstrap)
 ├── tests/                   # teste automate pytest
 ├── scripts/
-│   ├── prezentare.py        # pornire „cu un clic” + deschidere browser
-│   ├── prezentare.sh / .bat # lansatoare pentru Linux/macOS și Windows
+│   ├── prezentare.py        # pornire „cu un clic” + deschidere browser + teste
+│   ├── prezentare.sh        # lansator pentru Linux/macOS
+│   ├── windows/             # găsirea / instalarea automată a lui Python pe Windows
 │   └── run.sh               # pornire pentru dezvoltare (mod debug)
+├── 1. Porneste aplicatia.bat  # Windows: dublu-clic pentru pornire
+├── 2. Ruleaza testele.bat     # Windows: dublu-clic pentru teste
 ├── docs/                    # specificații, arhitectură, diagrame, capturi
 ├── seed.py                  # date fictive de test (--demo pentru tichete)
 ├── requirements.txt         # dependențele aplicației
