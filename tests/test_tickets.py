@@ -1,3 +1,7 @@
+"""Teste pentru tichete: creare (F2), listă (F3), detaliu (F4), preluare (F6),
+atribuire (F7), status și istoric (F8), comentarii (F9).
+"""
+
 from conftest import autentifica
 
 from app.extensions import db
@@ -5,6 +9,7 @@ from app.models import Category, Ticket, User
 
 
 def date_tichet(**modificari):
+    """Datele unui formular de tichet valid; argumentele suprascriu câmpuri (ex. titlu="")."""
     categorie = db.session.execute(db.select(Category)).scalars().first()
     date = {
         "titlu": "Laptopul nu pornește",
@@ -59,6 +64,7 @@ def test_lista_arata_doar_tichetele_mele(app, client):
 
 
 def creeaza_tichet_ca(client, email):
+    """Creează un tichet ca utilizatorul dat, se deconectează și returnează id-ul tichetului."""
     autentifica(client, email=email)
     raspuns = client.post("/tickets/new", data=date_tichet())
     client.post("/logout")
@@ -129,6 +135,7 @@ def test_angajatul_nu_poate_prelua(app, client):
 
 
 def id_utilizator(email):
+    """Returnează id-ul utilizatorului cu emailul dat."""
     return db.session.execute(db.select(User).filter_by(email=email)).scalar_one().id
 
 
@@ -166,6 +173,7 @@ def test_tehnicianul_nu_poate_atribui(app, client):
 
 
 def preia_ca_tehnician(client, tichet_id):
+    """Se autentifică drept tehnician și preia tichetul (rămâne autentificat)."""
     autentifica(client, email="tehnician@technova.test")
     client.post(f"/tickets/{tichet_id}/preia")
 

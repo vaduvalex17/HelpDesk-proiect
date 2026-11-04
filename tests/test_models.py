@@ -1,3 +1,5 @@
+"""Teste pentru modele: hash-ul parolei (N2) și valorile implicite ale tichetului."""
+
 from app.extensions import db
 from app.models import Category, Ticket, User
 

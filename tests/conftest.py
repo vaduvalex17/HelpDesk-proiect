@@ -1,9 +1,17 @@
+"""Configurația comună a testelor (pytest o încarcă automat).
+
+Fixture-urile de aici („app”, „client”) se primesc ca parametri în teste:
+pytest le creează înainte de fiecare test și le distruge după, deci fiecare test
+pornește de la o bază de date curată.
+"""
+
 import pytest
 
 from app import create_app
 from app.extensions import db
 from app.models import Category, User
 
+# Parola comună a conturilor de test.
 PAROLA = "parola123"
 
 
@@ -30,8 +38,10 @@ def app():
 
 @pytest.fixture
 def client(app):
+    """Un „browser” de test care trimite cereri la aplicație fără a porni serverul."""
     return app.test_client()
 
 
 def autentifica(client, email="angajat@technova.test", parola=PAROLA):
+    """Se autentifică în aplicație cu contul dat (implicit angajatul Ana)."""
     return client.post("/login", data={"email": email, "parola": parola})

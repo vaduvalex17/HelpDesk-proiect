@@ -9,3 +9,6 @@ __pycache__/
 instance/
 *.db
 .env
+
+# Ghidul de prezentare (doar local, nu se urcă pe GitHub)
+ghid/

@@ -1,3 +1,5 @@
+"""Teste pentru pagina principală „/”."""
+
 from conftest import autentifica
 
 

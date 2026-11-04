@@ -1,3 +1,5 @@
+"""Teste pentru F1 – autentificare și deconectare."""
+
 from conftest import autentifica
 
 from app.extensions import db

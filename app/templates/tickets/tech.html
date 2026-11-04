@@ -1,7 +1,12 @@
+{#
+  F6 – Panoul tehnicianului (doar tehnician și manager). Primește din ruta
+  tickets.panou_tehnician: „neatribuite” și „ale_mele”.
+#}
 {% extends "base.html" %}
 {% from "tickets/_tabel.html" import tabel_tichete %}
 {% block title %}Panou tehnician – HelpDesk IT{% endblock %}
 
+{# Butonul „Preia” de pe fiecare rând din tabelul de tichete neatribuite #}
 {% macro buton_preia(tichet) -%}
 <form method="post" action="{{ url_for('tickets.preia', tichet_id=tichet.id) }}" class="m-0">
   <button type="submit" class="btn btn-sm btn-success">Preia</button>

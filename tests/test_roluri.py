@@ -1,3 +1,5 @@
+"""Teste pentru F5 – decoratorul role_required și pagina 403."""
+
 import pytest
 from conftest import autentifica
 
@@ -6,6 +8,7 @@ from app.auth.decorators import role_required
 
 @pytest.fixture
 def app_cu_pagina_tehnica(app):
+    """Aplicația de test cu o pagină în plus, accesibilă doar tehnicianului și managerului."""
     @app.route("/doar-tehnic")
     @role_required("tehnician", "manager")
     def doar_tehnic():
@@ -14,6 +17,7 @@ def app_cu_pagina_tehnica(app):
     return app
 
 
+# parametrize rulează același test de trei ori, o dată pentru fiecare rol.
 @pytest.mark.parametrize(
     ("email", "cod"),
     [

@@ -1,3 +1,10 @@
+{#
+  Macro-ul tabel_tichete(), folosit de „Tichetele mele” și de panoul tehnicianului.
+    tichete    – lista de tichete de afișat
+    mesaj_gol  – textul afișat când lista e goală
+    cu_autor   – True ca să apară coloana „Autor”
+    actiune    – macro opțional care desenează un buton pe fiecare rând (ex. „Preia”)
+#}
 {% from "_macros.html" import badge_prioritate, badge_status %}
 {% macro tabel_tichete(tichete, mesaj_gol, cu_autor=false, actiune=none) -%}
 {% if tichete %}
