@@ -1,0 +1,2 @@
+# Fișierele .bat trebuie să aibă terminații de linie Windows (CRLF)
+*.bat text eol=crlf
